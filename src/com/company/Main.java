@@ -1,127 +1,175 @@
 package com.company;
 
-import java.util.Random;
-import java.util.Scanner;
+import java.util.*;
 
 public class Main {
+
+    static class Agent{
+        public char name;
+        public int zone;
+        public Agent(char name, int zone){
+            this.name = name;
+            this.zone = zone;
+        }
+    }
+
+    static class EnvironmentObject{
+        public char name;
+        public EnvironmentObject(char name){
+            this.name = name;
+        }
+
+    }
 
     static class Position {
         public int x;
         public int y;
-        public boolean dangerous;
+        public List<Agent> agentList = new ArrayList<>();
+        public List<EnvironmentObject> objects = new ArrayList<>();
+        public Harry harry = null;
+        public boolean inspectorZone;
+
         public Position(int x, int y){
+            this.inspectorZone = false;
             this.x = x;
             this.y = y;
-            this.dangerous = false;
         }
 
-        public boolean checkPosition(int x, int y){
-            if(this.x==x && this.y == y) return true;
+        public char getPosition(){
+            if(!agentList.isEmpty()) return agentList.get(agentList.size()-1).name;
+            if(inspectorZone) return 'Z';
+            if(harry != null) return 'H';
+            if(!objects.isEmpty()) return objects.get(objects.size()-1).name;
+            return '*';
+        }
+
+        public boolean isObject(Class obj){
+            for (EnvironmentObject object: objects) {
+                if(obj.isInstance(object)) return true;
+            }
             return false;
         }
+
+
+        public void deleteBook(){
+            objects.removeIf(object -> object.name == 'B');
+        }
+
+        public void deleteCloak(){
+            objects.removeIf(object -> object.name == 'I');
+        }
+
     }
 
-    static class AgentEnemy{
-        public Position position;
-        public int zone;
-    }
-
-    static class ArgusFilch extends AgentEnemy{
-        public ArgusFilch(Position position){
-            this.position = position;
-            this.zone = 2;
+    static class ArgusFilch extends Agent{
+        public ArgusFilch(){
+            super('A',2);
         }
     }
 
-    static class MrsNorris extends AgentEnemy{
-        public MrsNorris(Position position){
-            this.position = position;
-            this.zone = 1;
+    static class MrsNorris extends Agent{
+        public MrsNorris(){
+            super('C',1);
         }
     }
 
-    static class AgentFriendly{
-        public Position position;
-        public AgentFriendly(Position position){
-            this.position = position;
+    static class Book extends EnvironmentObject{
+        public Book(){
+            super('B');
         }
     }
 
-    static class Book extends AgentFriendly{
-        public Book(Position position){
-            super(position);
+    static class Exit extends EnvironmentObject{
+        public Exit(){
+            super('E');
         }
     }
 
-    static class Exit extends AgentFriendly{
-        public Exit(Position position){
-            super(position);
+    static class Cloak extends EnvironmentObject{
+        public Cloak(){
+            super('I');
         }
     }
 
-    static class Cloak extends AgentFriendly{
-        public Cloak(Position position){
-            super(position);
-        }
-    }
-
+    //Actor
     static class Harry{
-        public Position position;
-        public int zone;
-        public Harry(Position position){
-            this.position = position;
-            zone = 1;
-        }
-
-        public Position go(Position[] possibles){
-            Random random = new Random();
-            Position myNew = possibles[random.nextInt(possibles.length)];
-            this.position = myNew;
-            return myNew;
+        public int zone=1;
+        public char name = 'H';
+        public boolean haveBook = false;
+        public boolean haveCloak = false;
+        public Harry(){
         }
 
     }
 
     static class Map{
-        private final int size = 9;
-        private char[][] map;
+        public Position[][] map;
         public Map(){
-            this.map = new char[9][9];
+            this.map = new Position[9][9];
             for(int i=0;i<9;i++){
                 for(int k=0;k<9;k++){
-                    map[i][k]='*';
+                    map[i][k]= new Position(i,k);
                 }
             }
         }
 
-        public void setEnemy(AgentEnemy enemy){
-            Position position = enemy.position;
-
+        public void setEnemy(Agent enemy, int x, int y){
             for(int i = 0; i<9;i++){
                 for(int k = 0; k<9;k++){
-                    if(Math.abs(position.x-i)<=enemy.zone && Math.abs(position.y-k)<=enemy.zone){
-                        map[i][k] = 'D';
+                    if(i==x && y == k){
+                        map[i][k].agentList.add(enemy);
+                        map[i][k].inspectorZone = true;
+                    }else if(Math.abs(x-i)<=enemy.zone && Math.abs(y-k)<=enemy.zone){
+                        map[i][k].inspectorZone = true;
                     }
                 }
             }
-            map[position.x][position.y] = 'C';
         }
-        public void setFriend(AgentFriendly friend){
-            map[friend.position.x][friend.position.y]='F';
+        public void setFriend(EnvironmentObject object, int x, int y){
+            map[x][y].objects.add(object);
         }
 
-        public void setPlayer(Harry harry){
-            map[harry.position.x][harry.position.y]='H';
+        public void setPlayer(Harry harry, int x, int y){
+            map[x][y].harry = harry;
         }
 
         public void printMap(){
             for(int i=0;i<9;i++){
                 for(int k=0;k<9;k++){
-                    System.out.print(map[i][k]+" ");
+                    System.out.print(map[i][k].getPosition()+" ");
                 }
                 System.out.println();
             }
         }
+
+        public Position findActor(){
+            for (int i = 0; i < 9; i++) {
+                for (int k = 0; k < 9; k++) {
+                    if(map[i][k].harry!=null) return map[i][k];
+                }
+            }
+            return null;
+        }
+
+        public Position findBook(){
+            for (int i = 0; i < 9; i++) {
+                for (int k = 0; k < 9; k++) {
+                    if(map[i][k].objects!=null) return map[i][k];
+                }
+            }
+            return null;
+        }
+
+        public void DeleteInspector(){
+            for(int i=0;i<9;i++){
+                for (int k = 0; k < 9; k++) {
+                    if(map[i][k].inspectorZone && map[i][k].agentList.isEmpty()) map[i][k].inspectorZone=false;
+                }
+            }
+
+        }
+
+
     }
 
     static class Game{
@@ -131,26 +179,95 @@ public class Main {
         private Cloak cloak;
         private ArgusFilch argusFilch;
         private MrsNorris mrsNorris;
-        private Map gameMap;
-        private Map harryMap;
+        private Map gameGrid;
+        private Stack<Position> path = new Stack<>();
         public Game(){
-            harry = new Harry(new Position(8,0));
-            book = new Book(new Position(4,7));
-            exit = new Exit(new Position(4,1));
-            argusFilch = new ArgusFilch(new Position(6,4));
-            mrsNorris = new MrsNorris(new Position(1,2));
-            cloak = new Cloak(new Position(0,0));
+            harry = new Harry();//(new Position(8,0));
+            book = new Book();//(new Position(4,7));
+            exit = new Exit();//(new Position(4,1));
+            argusFilch = new ArgusFilch();//(new Position(6,4));
+            mrsNorris = new MrsNorris();//(new Position(1,2));
+            cloak = new Cloak();//(new Position(0,0));
 
-            gameMap = new Map();
+            gameGrid = new Map();
 
-            gameMap.setEnemy(argusFilch);
-            gameMap.setEnemy(mrsNorris);
-            gameMap.setFriend(book);
-            gameMap.setFriend(cloak);
-            gameMap.setFriend(exit);
-            gameMap.setPlayer(harry);
-            gameMap.printMap();
+            gameGrid.setEnemy(argusFilch,6,4);
+            gameGrid.setEnemy(mrsNorris,1,2);
+            gameGrid.setFriend(book,4,7);
+            gameGrid.setFriend(cloak,0,0);
+            gameGrid.setFriend(exit,4,1);
+            gameGrid.setPlayer(harry,8,0);
+            gameGrid.printMap();
+            DFS(gameGrid);
         }
+
+        public void startGame(){
+
+        }
+
+
+        private boolean DFSUtil(Map grid, int x, int y, boolean[][] visited){
+            int H = grid.map.length;
+            int L = grid.map[0].length;
+            path.push(new Position(x,y));
+            if(x<0 || y<0 || x>=H || y>=L || visited[x][y]|| grid.map[x][y].inspectorZone){
+                return false;
+            }
+            if(grid.map[x][y].isObject(Cloak.class)){
+                harry.haveCloak=true;
+                grid.DeleteInspector();
+                grid.map[x][y].deleteCloak();
+            }
+            if(grid.map[x][y].isObject(Book.class)){
+                harry.haveBook = true;
+                grid.map[x][y].deleteBook();
+                return true;
+            }
+            if(grid.map[x][y].isObject(Exit.class) && harry.haveBook){
+                return true;
+            }
+
+            grid.map[x][y].harry = harry;
+            visited[x][y]=true;
+            grid.printMap();
+            System.out.println();
+            grid.map[x][y].harry = null;
+            if(DFSUtil(grid, x+1,y,visited)) return true;
+            path.pop();
+            if(DFSUtil(grid, x-1,y,visited)) return true;
+            path.pop();
+            if(DFSUtil(grid, x,y+1,visited)) return true;
+            path.pop();
+            if(DFSUtil(grid, x,y-1,visited)) return true;
+            path.pop();
+            return false;
+        }
+
+        public void DFS(Map grid){
+            Position player = grid.findActor();
+            int h = grid.map.length;
+            int l = grid.map[player.x].length;
+            boolean[][] visited = new boolean[h][l];
+            System.out.println("DFS book:");
+            DFSUtil(grid,player.x, player.y, visited);
+            printStack();
+            Stack<Position> toBook = new Stack<>();
+            toBook.addAll(path);
+            path.clear();
+            visited = new boolean[h][l];
+            System.out.println("DFS exit:");
+            DFSUtil(grid,toBook.peek().x, toBook.peek().y, visited);
+            printStack();
+            System.out.println("FINISH GAME");
+
+        }
+
+        private void printStack(){
+            for (Position pos: path) {
+                System.out.print("["+pos.x+", "+ pos.y+"] ");
+            }
+        }
+
     }
 
 
@@ -158,9 +275,9 @@ public class Main {
 
 
 
-
-
     public static void main(String[] args) {
+
+
     Game game = new Game();
     }
 }
