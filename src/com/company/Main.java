@@ -180,7 +180,6 @@ public class Main {
         private ArgusFilch argusFilch;
         private MrsNorris mrsNorris;
         private Map gameGrid;
-        private Stack<Position> path = new Stack<>();
         public Game(){
             harry = new Harry();//(new Position(8,0));
             book = new Book();//(new Position(4,7));
@@ -198,13 +197,35 @@ public class Main {
             gameGrid.setFriend(exit,4,1);
             gameGrid.setPlayer(harry,8,0);
             gameGrid.printMap();
-            DFS(gameGrid);
-        }
-
-        public void startGame(){
 
         }
 
+        public void startBackTracking(boolean printStep){
+            BackTracking backTracking = new BackTracking(gameGrid, harry);
+            backTracking.printStep=printStep;
+            if(!backTracking.DFS()){
+                System.out.println("GAME OVER");
+            }else{
+                System.out.println("FINISH "+backTracking.path.size());
+            }
+
+            backTracking.printStack();
+        }
+
+    }
+
+
+
+
+    static class BackTracking{
+        private Map grid;
+        private Harry harry;
+        public boolean printStep = false;
+        private Stack<Position> path = new Stack<>();
+        public BackTracking(Map gameMap, Harry harry){
+            this.grid = gameMap;
+            this.harry = harry;
+        }
 
         private boolean DFSUtil(Map grid, int x, int y, boolean[][] visited){
             int H = grid.map.length;
@@ -213,10 +234,12 @@ public class Main {
             if(x<0 || y<0 || x>=H || y>=L || visited[x][y]|| grid.map[x][y].inspectorZone){
                 return false;
             }
+
             if(grid.map[x][y].isObject(Cloak.class)){
                 harry.haveCloak=true;
                 grid.DeleteInspector();
                 grid.map[x][y].deleteCloak();
+                visited = new boolean[H][L];
             }
             if(grid.map[x][y].isObject(Book.class)){
                 harry.haveBook = true;
@@ -229,8 +252,8 @@ public class Main {
 
             grid.map[x][y].harry = harry;
             visited[x][y]=true;
-            grid.printMap();
-            System.out.println();
+            if(printStep)grid.printMap();
+            if(printStep)System.out.println();
             grid.map[x][y].harry = null;
             if(DFSUtil(grid, x+1,y,visited)) return true;
             path.pop();
@@ -243,41 +266,43 @@ public class Main {
             return false;
         }
 
-        public void DFS(Map grid){
+        public boolean DFS(){
             Position player = grid.findActor();
             int h = grid.map.length;
             int l = grid.map[player.x].length;
-            boolean[][] visited = new boolean[h][l];
-            System.out.println("DFS book:");
-            DFSUtil(grid,player.x, player.y, visited);
-            printStack();
-            Stack<Position> toBook = new Stack<>();
-            toBook.addAll(path);
+            if(printStep) System.out.println("DFS book:");
+            boolean result = DFSUtil(grid,player.x, player.y, new boolean[h][l]);
+            if(!result){
+                return false;
+            }
+            Stack<Position> partPath = new Stack<>();
+            partPath.addAll(path);
             path.clear();
-            visited = new boolean[h][l];
-            System.out.println("DFS exit:");
-            DFSUtil(grid,toBook.peek().x, toBook.peek().y, visited);
-            printStack();
-            System.out.println("FINISH GAME");
-
+            if(printStep) System.out.println("\nDFS exit:");
+            DFSUtil(grid,partPath.peek().x, partPath.peek().y, new boolean[h][l]);
+            partPath.pop();
+            partPath.addAll(path);
+            path.clear();
+            path.addAll(partPath);
+            return true;
         }
 
-        private void printStack(){
-            for (Position pos: path) {
+        private void printStack(Stack<Position> pathPrint){
+            for (Position pos: pathPrint) {
                 System.out.print("["+pos.x+", "+ pos.y+"] ");
             }
+        }
+
+        public void printStack(){
+           printStack(path);
         }
 
     }
 
 
 
-
-
-
     public static void main(String[] args) {
-
-
     Game game = new Game();
+    game.startBackTracking(true);
     }
 }
