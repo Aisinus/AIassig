@@ -1,5 +1,7 @@
 package com.company;
 
+import javafx.util.Pair;
+
 import java.util.*;
 
 public class Main {
@@ -190,8 +192,8 @@ public class Main {
 
             gameGrid = new Map();
 
-            gameGrid.setEnemy(argusFilch,6,4);
-            gameGrid.setEnemy(mrsNorris,1,2);
+            gameGrid.setEnemy(argusFilch,6,5);
+            gameGrid.setEnemy(mrsNorris,2,1);
             gameGrid.setFriend(book,4,7);
             gameGrid.setFriend(cloak,0,0);
             gameGrid.setFriend(exit,4,1);
@@ -227,7 +229,7 @@ public class Main {
             this.harry = harry;
         }
 
-        private boolean DFSUtil(Map grid, int x, int y, boolean[][] visited){
+        private boolean DFSUtil(int x, int y, boolean[][] visited){
             int H = grid.map.length;
             int L = grid.map[0].length;
             path.push(new Position(x,y));
@@ -255,13 +257,21 @@ public class Main {
             if(printStep)grid.printMap();
             if(printStep)System.out.println();
             grid.map[x][y].harry = null;
-            if(DFSUtil(grid, x+1,y,visited)) return true;
+            if(DFSUtil(x+1,y,visited)) return true;
             path.pop();
-            if(DFSUtil(grid, x-1,y,visited)) return true;
+            if(DFSUtil(x-1,y,visited)) return true;
             path.pop();
-            if(DFSUtil(grid, x,y+1,visited)) return true;
+            if(DFSUtil(x,y+1,visited)) return true;
             path.pop();
-            if(DFSUtil(grid, x,y-1,visited)) return true;
+            if(DFSUtil(x,y-1,visited)) return true;
+            path.pop();
+            if(DFSUtil(x+1,y+1,visited)) return true;
+            path.pop();
+            if(DFSUtil(x+1,y-1,visited)) return true;
+            path.pop();
+            if(DFSUtil(x-1,y+1,visited)) return true;
+            path.pop();
+            if(DFSUtil(x-1,y-1,visited)) return true;
             path.pop();
             return false;
         }
@@ -271,7 +281,7 @@ public class Main {
             int h = grid.map.length;
             int l = grid.map[player.x].length;
             if(printStep) System.out.println("DFS book:");
-            boolean result = DFSUtil(grid,player.x, player.y, new boolean[h][l]);
+            boolean result = DFSUtil(player.x, player.y, new boolean[h][l]);
             if(!result){
                 return false;
             }
@@ -279,7 +289,7 @@ public class Main {
             partPath.addAll(path);
             path.clear();
             if(printStep) System.out.println("\nDFS exit:");
-            DFSUtil(grid,partPath.peek().x, partPath.peek().y, new boolean[h][l]);
+            DFSUtil(partPath.peek().x, partPath.peek().y, new boolean[h][l]);
             partPath.pop();
             partPath.addAll(path);
             path.clear();
@@ -297,6 +307,37 @@ public class Main {
            printStack(path);
         }
 
+    }
+
+    static class Dijkstra{
+        Map grid;
+        Harry harry;
+        List<Pair<Integer, Position>> wave = new ArrayList<>();
+        public Dijkstra(Map gameMap, Harry harry){
+            this.grid = gameMap;
+            this.harry = harry;
+        }
+
+        private void ShortestPath(){
+            Position player = grid.findActor();
+        }
+
+        private void LeeAlgorithm(int x, int y, boolean[][] visited, int[][] waves){
+            int H = grid.map.length;
+            int L = grid.map[0].length;
+
+            if(x<)
+
+            if(x==grid.findActor().x && y == grid.findActor().y){
+                waves[x][y]=0;
+            }
+
+
+        }
+
+        private boolean findWay(){
+
+        }
     }
 
 
